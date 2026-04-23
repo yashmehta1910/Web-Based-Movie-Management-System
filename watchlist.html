@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoviesHub Watchlist</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; }
+
+    /* NAVBAR */
+    .top-nav { background: #1c1c1c; display: flex; align-items: center; padding: 10px 20px; position: relative; }
+    .brand { font-size: 22px; font-weight: 700; color: #f5c518; text-decoration: none; white-space: nowrap; }
+    .search-wrap { position: absolute; left: 50%; transform: translateX(-50%); width: 380px; }
+    .search-wrap input {
+      width: 100%; background: #2b2b2b; border: 1px solid #3a3a3a;
+      border-radius: 20px; padding: 7px 16px 7px 34px;
+      color: #fff; font-size: 13px; font-family: 'Poppins', sans-serif; outline: none;
+    }
+    .search-wrap input::placeholder { color: #777; }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #888; font-size: 13px; pointer-events: none; }
+    .nav-links { display: flex; gap: 22px; margin-left: auto; align-items: center; }
+    .nav-links a { color: #ccc; text-decoration: none; font-size: 14px; font-weight: 500; }
+    .nav-links a.active { color: #fff; font-weight: 600; }
+    .nav-links a:hover { color: #f5c518; }
+
+    /* OUTER */
+    .outer-wrap {
+      background: #1e1e1e; margin: 14px; border-radius: 10px; padding: 18px;
+      display: grid; grid-template-columns: 175px 1fr 210px; gap: 18px;
+      min-height: calc(100vh - 90px);
+    }
+
+    /* LEFT */
+    .col-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .field-label { font-size: 12px; font-weight: 600; color: #aaa; margin-bottom: 6px; }
+    .field-input {
+      width: 100%; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 6px;
+      padding: 8px 10px; color: #ccc; font-size: 12px; font-family: 'Poppins', sans-serif;
+      outline: none; margin-bottom: 10px; transition: border-color 0.15s;
+    }
+    .field-input:focus { border-color: #f5c518; }
+    .field-input::placeholder { color: #555; }
+    .btn-yellow {
+      width: 100%; background: #f5c518; color: #000; border: none; border-radius: 6px;
+      padding: 9px; font-size: 13px; font-weight: 700; font-family: 'Poppins', sans-serif;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-yellow:hover { background: #e2b400; }
+    .btn-yellow:disabled { background: #888; cursor: not-allowed; }
+
+    /* Movie search suggestions dropdown */
+    .suggest-wrap { position: relative; margin-bottom: 10px; }
+    .suggest-input {
+      width: 100%; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 6px;
+      padding: 8px 10px; color: #ccc; font-size: 12px; font-family: 'Poppins', sans-serif;
+      outline: none; transition: border-color 0.15s;
+    }
+    .suggest-input:focus { border-color: #f5c518; }
+    .suggest-input::placeholder { color: #555; }
+    .suggest-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 999;
+      background: #1e1e1e; border: 1px solid #3a3a3a; border-radius: 6px;
+      max-height: 280px; overflow-y: auto; display: none; margin-top: 3px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+    .suggest-item {
+      display: flex; align-items: center; gap: 9px; padding: 7px 9px;
+      cursor: pointer; border-bottom: 1px solid #2a2a2a; transition: background 0.12s;
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover { background: #2a2a2a; }
+    .suggest-thumb {
+      width: 32px; height: 44px; border-radius: 4px; object-fit: cover;
+      background: #333; flex-shrink: 0;
+    }
+    .suggest-thumb-placeholder {
+      width: 32px; height: 44px; border-radius: 4px; background: #333;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .suggest-info { overflow: hidden; }
+    .suggest-name { font-size: 12px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .suggest-year { font-size: 11px; color: #888; }
+    .suggest-loading { padding: 12px; text-align: center; color: #888; font-size: 12px; }
+    .suggest-none { padding: 12px; text-align: center; color: #555; font-size: 12px; }
+
+    /* Selected movie preview */
+    .selected-preview {
+      background: #2a2a2a; border: 1px solid #f5c518; border-radius: 7px;
+      padding: 9px; display: none; align-items: center; gap: 9px; margin-bottom: 10px;
+    }
+    .selected-preview img {
+      width: 36px; height: 50px; border-radius: 4px; object-fit: cover; flex-shrink: 0;
+    }
+    .selected-preview-placeholder {
+      width: 36px; height: 50px; border-radius: 4px; background: #444;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .selected-title { font-size: 12px; font-weight: 600; color: #fff; }
+    .selected-year  { font-size: 11px; color: #f5c518; }
+    .clear-sel { margin-left: auto; background: none; border: none; color: #888; font-size: 14px; cursor: pointer; padding: 2px 4px; }
+    .clear-sel:hover { color: #fff; }
+
+    /* CENTER */
+    .section-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+    .watchlist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+    .wl-card {
+      background: #2a2a2a; border: 1px solid #333; border-radius: 8px;
+      overflow: hidden; position: relative; transition: transform 0.18s;
+    }
+    .wl-card:hover { transform: translateY(-3px); }
+
+    .wl-poster { width: 100%; aspect-ratio: 3/4; position: relative; overflow: hidden; }
+    .wl-poster img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .wl-poster-placeholder {
+      width: 100%; height: 100%; background: #333;
+      display: flex; align-items: center; justify-content: center; font-size: 40px;
+    }
+
+    .status-badge {
+      position: absolute; top: 7px; left: 7px;
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .badge-watched  { background: rgba(39,174,96,0.25);  color: #27ae60; border: 1px solid #27ae60; }
+    .badge-pending  { background: rgba(245,197,24,0.2);  color: #f5c518; border: 1px solid #f5c518; }
+    .badge-watching { background: rgba(52,152,219,0.2);  color: #3498db; border: 1px solid #3498db; }
+
+    .remove-btn {
+      position: absolute; top: 7px; right: 7px;
+      width: 24px; height: 24px; background: rgba(200,40,40,0.85);
+      border: none; border-radius: 50%; color: #fff; font-size: 12px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif; line-height: 1;
+    }
+    .remove-btn:hover { background: #c0392b; }
+
+    .wl-info { padding: 8px 10px 10px; }
+    .wl-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wl-meta  { font-size: 11px; color: #888; margin-bottom: 6px; }
+    .wl-rating { font-size: 13px; color: #f5c518; font-weight: 600; margin-bottom: 8px; }
+    .status-select {
+      width: 100%; background: #1e1e1e; border: 1px solid #3a3a3a; border-radius: 5px;
+      padding: 5px 8px; color: #ccc; font-size: 11px; font-family: 'Poppins', sans-serif;
+      outline: none; cursor: pointer;
+    }
+    .status-select:focus { border-color: #f5c518; }
+
+    .empty-msg { display: none; grid-column: 1/-1; text-align: center; padding: 50px 0; color: #555; font-size: 14px; }
+
+    /* RIGHT */
+    .right-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .summary-card { background: #2a2a2a; border: 1px solid #333; border-radius: 8px; padding: 16px; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #333; font-size: 13px; }
+    .summary-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .summary-key { color: #aaa; }
+    .summary-val { font-weight: 700; color: #fff; }
+    .summary-val.gold  { color: #f5c518; }
+    .summary-val.green { color: #27ae60; }
+    .summary-val.blue  { color: #3498db; }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <a class="brand" href="dashboard.jsp">MoviesHub</a>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search your watchlist..."/>
+    </div>
+    <div class="nav-links">
+      <a href="dashboard.jsp">Home</a>
+      <a href="movie.html">Movies</a>
+      <a href="watchlist.html" class="active">Watchlist</a>
+      <a href="#">Sign In</a>
+    </div>
+  </div>
+
+  <div class="outer-wrap">
+
+    <!-- LEFT: Add Movie with TMDB search -->
+    <aside>
+      <div class="col-title">Add Movie</div>
+
+      <div class="field-label">Search Movie</div>
+      <div class="suggest-wrap">
+        <input class="suggest-input" type="text" id="movieSearch" placeholder="Type a movie name…" autocomplete="off"/>
+        <div class="suggest-dropdown" id="suggestDropdown"></div>
+      </div>
+
+      <!-- Selected movie preview -->
+      <div class="selected-preview" id="selectedPreview">
+        <span id="previewImg"></span>
+        <div>
+          <div class="selected-title" id="previewTitle">—</div>
+          <div class="selected-year" id="previewYear"></div>
+        </div>
+        <button class="clear-sel" id="clearSel" title="Clear">✕</button>
+      </div>
+
+      <div class="field-label">Genre <span style="color:#555;font-weight:400">(optional)</span></div>
+      <input class="field-input" type="text" id="addGenre" placeholder="e.g. Action, Sci-Fi"/>
+
+      <div class="field-label">Your Rating <span style="color:#555;font-weight:400">(optional)</span></div>
+      <input class="field-input" type="number" id="addRating" placeholder="e.g. 8.5" min="0" max="10" step="0.1"/>
+
+      <button class="btn-yellow" id="addMovieBtn">+ Add to Watchlist</button>
+    </aside>
+
+    <!-- CENTER: Watchlist grid -->
+    <main>
+      <div class="section-title">My Watchlist</div>
+      <div class="watchlist-grid" id="watchlistGrid">
+
+        <div class="wl-card" data-status="Watched">
+          <div class="wl-poster">
+            <img id="wl-299534" src="" alt="Avengers: Endgame" style="width:100%;height:100%;object-fit:cover;display:block"/>
+            <span class="status-badge badge-watched">Watched</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">Avengers: Endgame</div>
+            <div class="wl-meta">2019 · Action, Sci-Fi</div>
+            <div class="wl-rating">⭐ 8.4</div>
+            <select class="status-select">
+              <option value="Watched" selected>✅ Watched</option>
+              <option value="Watching">▶ Watching</option>
+              <option value="Pending">🕐 Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wl-card" data-status="Pending">
+          <div class="wl-poster">
+            <img id="wl-157336" src="" alt="Interstellar" style="width:100%;height:100%;object-fit:cover;display:block"/>
+            <span class="status-badge badge-pending">Pending</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">Interstellar</div>
+            <div class="wl-meta">2014 · Sci-Fi, Drama</div>
+            <div class="wl-rating">⭐ 8.6</div>
+            <select class="status-select">
+              <option value="Watched">✅ Watched</option>
+              <option value="Watching">▶ Watching</option>
+              <option value="Pending" selected>🕐 Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wl-card" data-status="Watching">
+          <div class="wl-poster">
+            <img id="wl-155" src="" alt="The Dark Knight" style="width:100%;height:100%;object-fit:cover;display:block"/>
+            <span class="status-badge badge-watching">Watching</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">The Dark Knight</div>
+            <div class="wl-meta">2008 · Action, Drama</div>
+            <div class="wl-rating">⭐ 9.1</div>
+            <select class="status-select">
+              <option value="Watched">✅ Watched</option>
+              <option value="Watching" selected>▶ Watching</option>
+              <option value="Pending">🕐 Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wl-card" data-status="Pending">
+          <div class="wl-poster">
+            <img id="wl-27205" src="" alt="Inception" style="width:100%;height:100%;object-fit:cover;display:block"/>
+            <span class="status-badge badge-pending">Pending</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">Inception</div>
+            <div class="wl-meta">2010 · Sci-Fi, Thriller</div>
+            <div class="wl-rating">⭐ 9.0</div>
+            <select class="status-select">
+              <option value="Watched">✅ Watched</option>
+              <option value="Watching">▶ Watching</option>
+              <option value="Pending" selected>🕐 Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wl-card" data-status="Watched">
+          <div class="wl-poster">
+            <img id="wl-238" src="" alt="The Godfather" style="width:100%;height:100%;object-fit:cover;display:block"/>
+            <span class="status-badge badge-watched">Watched</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">The Godfather</div>
+            <div class="wl-meta">1972 · Drama, Crime</div>
+            <div class="wl-rating">⭐ 9.2</div>
+            <select class="status-select">
+              <option value="Watched" selected>✅ Watched</option>
+              <option value="Watching">▶ Watching</option>
+              <option value="Pending">🕐 Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wl-card" data-status="Pending">
+          <div class="wl-poster">
+            <img id="wl-693134" src="" alt="Dune: Part Two" style="width:100%;height:100%;object-fit:cover;display:block"/>
+            <span class="status-badge badge-pending">Pending</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">Dune: Part Two</div>
+            <div class="wl-meta">2024 · Sci-Fi, Adventure</div>
+            <div class="wl-rating">⭐ 8.7</div>
+            <select class="status-select">
+              <option value="Watched">✅ Watched</option>
+              <option value="Watching">▶ Watching</option>
+              <option value="Pending" selected>🕐 Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="empty-msg" id="emptyMsg">No movies found.</div>
+      </div>
+    </main>
+
+    <!-- RIGHT: Summary -->
+    <aside>
+      <div class="right-title">Summary</div>
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-key">Total</span>
+          <span class="summary-val gold" id="statTotal">6</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Watched</span>
+          <span class="summary-val green" id="statWatched">2</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Watching</span>
+          <span class="summary-val blue" id="statWatching">1</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Pending</span>
+          <span class="summary-val gold" id="statPending">3</span>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ── Load posters for pre-built cards via TMDB ID ──
+    const TMDB_KEY = '8265bd1679663a7ea12ac168da84d2e8';
+    const IMG_BASE = 'https://image.tmdb.org/t/p/w342';
+    const PRESET_IDS = [299534, 157336, 155, 27205, 238, 693134];
+    PRESET_IDS.forEach(id => {
+      fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}`)
+        .then(r => r.json())
+        .then(d => {
+          const el = document.getElementById('wl-' + id);
+          if (el && d.poster_path) el.src = IMG_BASE + d.poster_path;
+        }).catch(() => {});
+    });
+  </script>
+  <script>
+    // ── TMDB search via public API ──
+    const TMDB_IMG  = 'https://image.tmdb.org/t/p/';
+    const TMDB_API  = 'https://api.themoviedb.org/3';
+    // Public TMDB read-only key (safe to embed — rate limited, read-only)
+    // TMDB_KEY already declared above
+
+    let searchTimer = null;
+    let selectedMovie = null; // { id, title, year, posterPath, rating }
+
+    // ── Live search suggestions ──
+    $('#movieSearch').on('input', function() {
+      const q = $(this).val().trim();
+      clearTimeout(searchTimer);
+      if (q.length < 2) { $('#suggestDropdown').hide().empty(); return; }
+      $('#suggestDropdown').html('<div class="suggest-loading">Searching…</div>').show();
+      searchTimer = setTimeout(() => fetchSuggestions(q), 350);
+    });
+
+    async function fetchSuggestions(q) {
+      try {
+        const res  = await fetch(`${TMDB_API}/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}&page=1`);
+        const data = await res.json();
+        renderSuggestions(data.results || []);
+      } catch(e) {
+        $('#suggestDropdown').html('<div class="suggest-none">Could not reach movie database.</div>');
+      }
+    }
+
+    function renderSuggestions(results) {
+      const dd = $('#suggestDropdown');
+      if (!results.length) { dd.html('<div class="suggest-none">No movies found.</div>'); return; }
+      dd.empty();
+      results.slice(0, 7).forEach(m => {
+        const year  = m.release_date ? m.release_date.slice(0,4) : '—';
+        const thumb = m.poster_path
+          ? `<img class="suggest-thumb" src="${TMDB_IMG}w92${m.poster_path}" alt="${m.title}">`
+          : `<div class="suggest-thumb-placeholder">🎬</div>`;
+        const item = $(`
+          <div class="suggest-item" data-id="${m.id}">
+            ${thumb}
+            <div class="suggest-info">
+              <div class="suggest-name">${m.title}</div>
+              <div class="suggest-year">${year}${m.vote_average ? ' · ⭐ ' + m.vote_average.toFixed(1) : ''}</div>
+            </div>
+          </div>`);
+        item.on('click', () => selectMovie(m));
+        dd.append(item);
+      });
+    }
+
+    function selectMovie(m) {
+      selectedMovie = {
+        id:         m.id,
+        title:      m.title,
+        year:       m.release_date ? m.release_date.slice(0,4) : '—',
+        posterPath: m.poster_path || null,
+        rating:     m.vote_average ? m.vote_average.toFixed(1) : null
+      };
+      // Update search input & hide dropdown
+      $('#movieSearch').val(m.title);
+      $('#suggestDropdown').hide().empty();
+
+      // Show preview
+      const imgHtml = selectedMovie.posterPath
+        ? `<img src="${TMDB_IMG}w92${selectedMovie.posterPath}" alt="${selectedMovie.title}" style="width:36px;height:50px;border-radius:4px;object-fit:cover;">`
+        : `<div class="selected-preview-placeholder">🎬</div>`;
+      $('#previewImg').html(imgHtml);
+      $('#previewTitle').text(selectedMovie.title);
+      $('#previewYear').text(selectedMovie.year + (selectedMovie.rating ? ' · ⭐ ' + selectedMovie.rating : ''));
+      $('#selectedPreview').css('display','flex');
+    }
+
+    $('#clearSel').on('click', () => {
+      selectedMovie = null;
+      $('#movieSearch').val('');
+      $('#selectedPreview').hide();
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+      if (!$(e.target).closest('.suggest-wrap').length) $('#suggestDropdown').hide();
+    });
+
+    // ── Stats ──
+    function updateStats() {
+      const total    = $('.wl-card').length;
+      const watched  = $('.wl-card').filter(function(){ return $(this).find('.status-select').val()==='Watched'; }).length;
+      const watching = $('.wl-card').filter(function(){ return $(this).find('.status-select').val()==='Watching'; }).length;
+      const pending  = $('.wl-card').filter(function(){ return $(this).find('.status-select').val()==='Pending'; }).length;
+      $('#statTotal').text(total);
+      $('#statWatched').text(watched);
+      $('#statWatching').text(watching);
+      $('#statPending').text(pending);
+    }
+
+    // ── Remove card ──
+    $(document).on('click', '.remove-btn', function() {
+      $(this).closest('.wl-card').fadeOut(250, function() {
+        $(this).remove();
+        updateStats();
+        $('#emptyMsg').toggle($('.wl-card').length === 0);
+      });
+    });
+
+    // ── Status change → update badge ──
+    $(document).on('change', '.status-select', function() {
+      const v     = $(this).val();
+      const card  = $(this).closest('.wl-card');
+      const badge = card.find('.status-badge');
+      card.attr('data-status', v);
+      badge.removeClass('badge-watched badge-pending badge-watching');
+      if      (v === 'Watched')  { badge.addClass('badge-watched').text('Watched'); }
+      else if (v === 'Watching') { badge.addClass('badge-watching').text('Watching'); }
+      else                       { badge.addClass('badge-pending').text('Pending'); }
+      updateStats();
+    });
+
+    // ── Add to Watchlist ──
+    $('#addMovieBtn').on('click', function() {
+      const title  = selectedMovie ? selectedMovie.title : $('#movieSearch').val().trim();
+      if (!title) { alert('Please search and select a movie first.'); return; }
+
+      const genre   = $('#addGenre').val().trim() || 'General';
+      const userRating = parseFloat($('#addRating').val());
+      const displayRating = !isNaN(userRating) && userRating >= 0 && userRating <= 10
+        ? userRating.toFixed(1)
+        : (selectedMovie && selectedMovie.rating ? selectedMovie.rating : '—');
+      const year    = selectedMovie ? selectedMovie.year : new Date().getFullYear();
+
+      const posterHtml = (selectedMovie && selectedMovie.posterPath)
+        ? `<img src="${TMDB_IMG}w342${selectedMovie.posterPath}" alt="${title}"/>`
+        : `<div class="wl-poster-placeholder">🎬</div>`;
+
+      const card = `
+        <div class="wl-card" data-status="Pending" style="display:none">
+          <div class="wl-poster">
+            ${posterHtml}
+            <span class="status-badge badge-pending">Pending</span>
+            <button class="remove-btn">✕</button>
+          </div>
+          <div class="wl-info">
+            <div class="wl-title">${title}</div>
+            <div class="wl-meta">${year} · ${genre}</div>
+            <div class="wl-rating">⭐ ${displayRating}</div>
+            <select class="status-select">
+              <option value="Watched">✅ Watched</option>
+              <option value="Watching">▶ Watching</option>
+              <option value="Pending" selected>🕐 Pending</option>
+            </select>
+          </div>
+        </div>`;
+
+      $('#emptyMsg').before(card);
+      $('#watchlistGrid .wl-card:last').fadeIn(300);
+
+      // Reset form
+      selectedMovie = null;
+      $('#movieSearch').val('');
+      $('#selectedPreview').hide();
+      $('#addGenre').val('');
+      $('#addRating').val('');
+
+      $(this).text('✔ Added!').css('background','#27ae60');
+      setTimeout(() => { $(this).text('+ Add to Watchlist').css('background','#f5c518'); }, 1500);
+      updateStats();
+    });
+
+    // ── Watchlist search (navbar) ──
+    $('#searchInput').on('input', function() {
+      const q = $(this).val().toLowerCase().trim();
+      if (!q) { $('.wl-card').show(); }
+      else {
+        $('.wl-card').each(function() {
+          $(this).toggle($(this).find('.wl-title').text().toLowerCase().includes(q));
+        });
+      }
+      $('#emptyMsg').toggle($('.wl-card:visible').not('#emptyMsg').length === 0);
+    });
+
+    updateStats();
+  </script>
+</body>
+</html>

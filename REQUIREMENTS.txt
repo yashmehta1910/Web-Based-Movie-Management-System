@@ -1,0 +1,85 @@
+# MoviesHub — Project Requirements
+
+## ☕ Java / Server Requirements
+
+| Requirement | Version |
+|---|---|
+| Java JDK | 17 or higher |
+| Apache Tomcat | 10.x (supports Jakarta EE 9+) |
+| Eclipse IDE | 2023-06 or later (Enterprise Java edition) |
+
+> ⚠️ Tomcat 10.x is required because the project uses `jakarta.servlet.*`  
+> (Tomcat 9 uses `javax.servlet.*` and will NOT work)
+
+---
+
+## 🗄️ Database
+
+| Requirement | Version |
+|---|---|
+| MySQL Server | 8.0 or higher |
+| MySQL Workbench (optional) | 8.0 |
+
+---
+
+## 📦 Java Dependencies (JAR files)
+
+These are already included in `WEB-INF/lib/`:
+
+| Library | Version | Purpose |
+|---|---|---|
+| mysql-connector-j | 9.6.0 | JDBC driver to connect Java to MySQL |
+
+---
+
+## 🌐 Frontend CDN Dependencies
+
+These are loaded automatically via CDN (no installation needed):
+
+| Library | Version | Purpose |
+|---|---|---|
+| Bootstrap | 5.3.2 | UI layout and components |
+| jQuery | 3.7.1 | DOM manipulation and AJAX |
+| Google Fonts (Poppins) | — | Typography |
+
+---
+
+## 🎬 External API
+
+| Service | Purpose | Free? |
+|---|---|---|
+| TMDB API | Live movie search in Watchlist | ✅ Yes (requires free API key) |
+| TMDB Image CDN | Movie poster images | ✅ Yes |
+| Wikipedia Images | Fallback poster images | ✅ Yes |
+
+Get your free TMDB API key at: https://www.themoviedb.org/settings/api
+
+---
+
+## 🗃️ Database Setup
+
+Run this SQL before starting the application:
+
+```sql
+CREATE DATABASE authdb;
+
+USE authdb;
+
+CREATE TABLE users (
+    id       INT PRIMARY KEY AUTO_INCREMENT,
+    fullname VARCHAR(100)         NOT NULL,
+    email    VARCHAR(150) UNIQUE  NOT NULL,
+    password VARCHAR(255)         NOT NULL
+);
+```
+
+---
+
+## 🔧 Eclipse Project Setup Checklist
+
+- [ ] JDK 17+ configured in Eclipse (`Window > Preferences > Java > Installed JREs`)
+- [ ] Tomcat 10.x added to Eclipse (`Window > Preferences > Server > Runtime Environments`)
+- [ ] `mysql-connector-j-9.6.0.jar` present in `WEB-INF/lib/`
+- [ ] Project facet set to `Dynamic Web Module 5.0` or higher
+- [ ] Database `authdb` created and running on port `3306`
+- [ ] DB credentials updated in `LoginServlet.java` and `SignupServlet.java`
