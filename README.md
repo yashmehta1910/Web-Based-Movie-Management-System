@@ -154,5 +154,4 @@ This project is for educational purposes. Feel free to fork and improve it.
 
 ## 👤 Author
 
-Made by **[Your Name]**  
-GitHub: [@YourUsername](https://github.com/YourUsername)
+Made by YASH KUMAR MEHTA 
